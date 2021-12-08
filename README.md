@@ -1,5 +1,7 @@
-# Sorting_In_Java
+# DSACODES_In_Java
 
-Here are all the sorting techniques in Java
+Here are all the codes in Java 
 
-And these may help you in getting the basic knowledge on how to code sorting in Java
+These codes are written for example purpose
+
+And these may help you in getting the basic knowledge on the concepts of datastructures in Java
