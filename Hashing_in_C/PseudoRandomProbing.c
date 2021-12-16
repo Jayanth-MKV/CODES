@@ -7,6 +7,7 @@
 int array[htsize];
 
 int hash(int key,int i){
+	srand(key);
     return (key+i*rand())%htsize;
 }
 
@@ -67,7 +68,7 @@ void display(){
 
 
 int main(){
-    srand(time(0));
+    
     int c,key,i;
     for(i=0;i<htsize;i++){
         array[i]=-1;
