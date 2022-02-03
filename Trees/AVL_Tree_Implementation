@@ -7,11 +7,15 @@ struct Node
     struct Node *left;
     struct Node *right;
 };
+
+int max (int a, int b){
+    return (a>b)?a:b;
+}
  
 int getHeight(struct Node *n){
     if(n==NULL)
         return 0;
-    return ( max(getHeight(n->left),getHeight(n->right))+1 );
+    return ( max(getHeight(n->left),getHeight(n->right)) + 1 );
 }
  
 struct Node *createNode(int key){
@@ -23,9 +27,7 @@ struct Node *createNode(int key){
     return node;
 }
  
-int max (int a, int b){
-    return (a>b)?a:b;
-}
+
  
 int getBalanceFactor(struct Node * n){
     if(n==NULL){
