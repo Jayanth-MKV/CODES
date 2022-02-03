@@ -6,7 +6,6 @@ struct Node
     int key;
     struct Node *left;
     struct Node *right;
-    int height;
 };
  
 int getHeight(struct Node *n){
@@ -42,9 +41,6 @@ struct Node* rightRotate(struct Node* y){
     x->right = y;
     y->left = T2;
  
-    x->height = max(getHeight(x->right), getHeight(x->left)) + 1;
-    y->height = max(getHeight(y->right), getHeight(y->left)) + 1;
- 
     return x;
 }
  
@@ -54,10 +50,7 @@ struct Node* leftRotate(struct Node* x){
  
     y->left = x;
     x->right = T2;
- 
-    x->height = max(getHeight(x->right), getHeight(x->left)) + 1;
-    y->height = max(getHeight(y->right), getHeight(y->left)) + 1;
- 
+    
     return y;
 }
  
@@ -70,7 +63,6 @@ struct Node *insert(struct Node* node, int key){
     else if (key > node->key)
         node->right = insert(node->right, key);
  
-    node->height = 1 + max(getHeight(node->left), getHeight(node->right));
     int bf = getBalanceFactor(node);
  
     // Left Left Case
