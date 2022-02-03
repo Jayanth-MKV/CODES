@@ -11,7 +11,7 @@ struct Node
 int getHeight(struct Node *n){
     if(n==NULL)
         return 0;
-    return n->height;
+    return ( max(getHeight(n->left),getHeight(n->right))+1 );
 }
  
 struct Node *createNode(int key){
