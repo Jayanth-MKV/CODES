@@ -40,10 +40,9 @@ void delete(int key){
 }
 	
 void search(int key){
-	int b=0;
 	int i;
 	for(i=0;i<htsize;i++){
-	int a=hash(key,b);
+	int a=hash(key,i);
 	if(array[a]==key){
 		printf("Element found at position : %d \n",a);
 		return;
