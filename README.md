@@ -1,7 +1,7 @@
-# DSA-CODES_In_Java
+# CODES
 
-Here are all the codes in Java 
+Here are all the codes of different programs in cpp,java,c. 
 
 These codes are written for example purpose
 
-And these may help you in getting the basic knowledge on the concepts of datastructures in C and Java
+And these may help you in getting the basic knowledge on the concepts.
