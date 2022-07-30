@@ -13,17 +13,23 @@ int n,i,j;
 printf("Enter the no. of processes :");
 scanf("%d",&n);
 struct P p[n];
+  
 printf("Enter the quantum  \n");
 scanf("%d",&quant);
 
-for(i=0;i<n;i++){
-printf("Enter the process number \n");
+printf("Enter the process numbers \n");
+for(i=0;i<n;i++)
 scanf("%d",&(p[i].pos));
-printf("Enter the Arrival time of process - %d \n",p[i].pos);
+  
+printf("Enter the Arrival time of processes \n");
+for(i=0;i<n;i++)
 scanf("%d",&(p[i].AT));
-printf("Enter the Burst time of process - %d \n",p[i].pos);
+  
+printf("Enter the Burst time of processes \n");
+for(i=0;i<n;i++)
 scanf("%d",&(p[i].BT));
-}
+  
+
 
 // Declaring variables
 int c=n,s[n][20];
