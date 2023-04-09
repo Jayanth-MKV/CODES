@@ -41,8 +41,10 @@ void encrypt(char text[])
     int n = strlen(text);
     int j = 0;
     // Convert to Lower and remove spaces
+    // printf("%s %d", text,n);
     for (int i = 0; i < n; i++)
     {
+        // printf("%c", text[i]);
         if (text[i] != ' ')
             text[j++] = tolower(text[i]);
     }
@@ -86,12 +88,12 @@ void encrypt(char text[])
     for (int i = 0; i < n; i += 2)
     {
         int arr[4];
-        printf("%c %c\n", text[i], text[i + 1]);
+        // printf("%c %c\n", text[i], text[i + 1]);
         getpos(text[i], text[i + 1], arr);
         
-        for (int f = 0; f < 4; f++)
-            printf("%d ", arr[f]);
-        printf("\n");
+        // for (int f = 0; f < 4; f++)
+        //     printf("%d ", arr[f]);
+        // printf("\n");
 
         if (arr[0] == arr[2])
         {
@@ -131,8 +133,8 @@ void KeyTable(char key[], char text[])
     }
     dict['j' - 97] = 1;
     
-    for (int i = 0; i < 26; i++)
-        printf("%c - %d\n", (i + 97), dict[i]);
+    // for (int i = 0; i < 26; i++)
+    //     printf("%c - %d\n", (i + 97), dict[i]);
 
     int p = 0, q = 0;
 
@@ -167,17 +169,50 @@ void KeyTable(char key[], char text[])
     }
 }
 
-void search(){
+void decrypt(char text[])
+{
+    int n = strlen(text);
 
+    char ans[20] = "";
+
+    for (int i = 0; i < n; i += 2)
+    {
+        int arr[4];
+        // printf("%c %c\n", text[i], text[i + 1]);
+        getpos(text[i], text[i + 1], arr);
+
+        // for (int f = 0; f < 4; f++)
+        //     printf("%d ", arr[f]);
+        // printf("\n");
+
+        if (arr[0] == arr[2])
+        {
+            ans[i] = KT[arr[0]][(5 + arr[1] - 1) % 5];
+            ans[i + 1] = KT[arr[0]][(5 + arr[3] - 1) % 5];
+        }
+        else if (arr[3] == arr[1])
+        {
+            ans[i] = KT[(5 + arr[0] - 1) % 5][arr[1]];
+            ans[i + 1] = KT[(5 + arr[2] - 1) % 5][arr[1]];
+        }
+        else
+        {
+            ans[i] = KT[arr[0]][arr[3]];
+            ans[i + 1] = KT[arr[2]][arr[1]];
+        }
+    }
+
+    printf("%d\n", strlen(ans));
+    printf("%s\n", ans);
 }
 
 int main(int argc, char const *argv[])
 {
     char keyword[10], text[20];
     strcpy(keyword, "MONARCHY");
-    // strcpy(text, "instruments");
-    strcpy(text, "Helloe");
+    strcpy(text, "instruments");
+    // strcpy(text, "Helloe");
     KeyTable(keyword, text);
-    // encrypt(text);
+    decrypt("gatlmzclrqxa");
     return 0;
 }
