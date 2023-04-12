@@ -1,0 +1,14 @@
+a0 : a=11
+a1 : b=10
+t0 : t0&&t1
+t1 : b>9
+t0 : a>b
+b0 : IF t0
+	 THEN b1
+t2 : a==0
+b1 : IF t2
+	 THEN a2
+a2 : b=a
+ELSE a3
+a3 : b=0
+GOTO 0

@@ -1,0 +1,12 @@
+int main(){
+
+int p;
+int c;
+int p;
+c=0;
+p=1;
+
+print p;
+
+return 0;
+}

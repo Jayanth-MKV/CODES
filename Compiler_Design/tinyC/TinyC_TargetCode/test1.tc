@@ -1,0 +1,11 @@
+int main()
+{
+int a;
+int b;
+a=11;
+b=10;
+b=a;
+print a;
+print b;
+return 0;
+}

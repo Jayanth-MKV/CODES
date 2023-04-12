@@ -1,0 +1,51 @@
+BNF Grammar: Level-2(TinyC-integer,double-assignments-operators-if-else)
+
+<program>  :: = <main_function> 
+
+<main_function> ::= int main() { <optional_local_var_decl> <stmt_list>  <return_stmt>}
+
+<stmt_list> ::= <assignment_stmt> | <print_stmt> | <if-else-stmt> | <assignment_stmt><stmt_list> | <print_stmt><stmt_list>
+
+<stmt> ::= <assignment_stmt> | <print_stmt> | <if-else-stmt>
+
+<assignment_stmt> ::= <identifier> = <expr> ;
+
+<expr> ::= <expr> <arithop> <expr> | <identifier> | <constant>
+
+<arithop> ::= + | - | * | / | %
+
+<logicalexpr> := <logicalexpr> && <logicalexpr> | <logicalexpr> || <logicalexpr> | ! <logicalexpr> | <relexpr>
+
+<relexpr> ::= <expr> <relop> <expr>  
+
+<relop> ::= < | > | == | >= | <= | !=
+
+<if-else-stmt> ::=  if (<logicalexpr>) <stmt> else <stmt> | if (<logicalexpr>) <stmt> 
+
+<return_stmt> ::= return 0;
+
+<optional_local_var_decl> ::= <nothing> | <vardecl><optional_local_var_decl>
+
+<vardecl>  ::=  int <identifier> ; | double <identifier> ;
+
+<identifier> ::= <letter> | <letter><idchar>
+
+<idchar> ::= <letterdigit_> | <letterdigit_><idchar>
+
+<letterdigit_> ::= <letter> | <digit> | <underscore>
+
+<letter> ::= A|B|C|...|Z|a|b|c|...|z
+
+<digit> ::= 0|1|2...|9
+
+<underscore> ::= _
+
+<constant> ::=  <int_const> | <double_const>
+
+<double_const> ::= +<digits>.<digits> | -<digits>.<digits> | <digits>.<digits>
+
+<int_const> ::= + <digits> | -<digits> | <digits>
+
+<digits> ::= <digit><digits> | <digit>
+
+<print_stmt> ::= print <constant> ; | print <identifier> ;
