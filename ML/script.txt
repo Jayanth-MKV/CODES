@@ -1,0 +1,439 @@
+const playSaveBtn = document.getElementById("play-saved");
+const playAudioBtn = document.getElementById("play-audio");
+const form = document.getElementById("story-form");
+const storyContainer = document.getElementById("story-container");
+const storyText = document.getElementById("story-text");
+const storyImage = document.getElementById("story-image");
+const savedStoriesList = document.getElementById("saved-stories-list");
+const savedStoriesContainer = document.getElementById("saved-stories-container");
+const apiKey = "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";
+
+var storyType = document.getElementById("story-type").value;
+var scenario = document.getElementById("scenario").value;
+var artifacts = document.getElementById("artifacts").value;
+var keywords = document.getElementById("keywords").value;
+var storyLength = document.getElementById("story-length").value;
+var ageGroup = document.getElementById("age-group").value;
+var mainCharacterGender = document.getElementById("main-character-gender").value;
+var language = document.getElementById("language").value; // Add this line
+
+
+// Set the max token limit for the model (e.g., 4096 for text-davinci-003)
+const maxTokens = 4096;
+let speechSynthesisInstance;
+let selectedKey = null;
+let currentChapter = 1;
+let isPlaying = false;
+let isFirstImage = true;
+var TheStory;
+const submitLongButton = document.querySelector('button[type="submitlong"]');
+// EVENT LISTENERS HERE
+//
+//
+
+// PLAY SAVED BUTTON
+playSaveBtn.addEventListener("click", (e) => {
+	e.preventDefault();
+	if (selectedKey) {
+		const savedStory = localStorage.getItem(selectedKey);
+		if (savedStory) {
+			playSavedStoryAudio(savedStory); // Use the correct function to play the saved story
+			playAudioBtn.style.display = "none";
+			playSaveBtn.style.display = "inline-block";
+		}
+	}
+});
+
+const toggleSavedStoriesButton = document.getElementById("toggle-saved-stories");
+toggleSavedStoriesButton.addEventListener("click", toggleSavedStoriesList);
+
+// PLAY BUTTON
+playAudioBtn.addEventListener("click", () => {
+	console.log("Play button clicked");
+	const storyPlainText = storyText.innerText;
+	playStoryAudio(storyPlainText, true); // Pass true to play only the latest chapter
+});
+
+// CONTINUEEEEEEEEEEEEE STORY
+document.getElementById("continue-story-button").addEventListener("click", async () => {
+  const previousStory = storyText.innerText;
+  console.log("Previous story:", previousStory);
+  const language = document.getElementById("language").value;
+  console.log("Language:", language);
+    showLoadingAnimation();
+  // Increment the current chapter number
+  currentChapter += 1;
+
+  const continuedStory = await continueStory(previousStory, language, maxTokens, currentChapter);
+
+  console.log("Continued story generated:", continuedStory);
+  console.log("updating story image");
+  const storyTokens = continuedStory.split(' ');
+  const imageToken = storyTokens.slice(-10).join(' ');
+  updateStoryImage(imageToken);
+
+  // Append the new chapter to the story
+  storyText.innerHTML = (storyText.innerHTML + continuedStory).replace(/\n/g, "<br>");
+ hideLoadingAnimation();
+  // Call updateStoryDisplay function to fix the chapter numbers
+  //updateStoryDisplay(storyText.innerText);
+});
+
+// GENERATE STORY FUNCTIONS HERE
+//
+//
+
+//parallel call
+const updateStoryImage = async (chapterContent) => {
+  const imageUrl = await new Promise((resolve) => {
+    generateStoryImage(chapterContent);
+    resolve(storyImage.src);
+  });
+  console.log(`Generated image URL: ${imageUrl}`);
+};
+
+//generate imageeeee
+
+const generateStoryImage = async (chapterContent) => {
+  console.log("Generating image...");
+  const prompt = `Generate a pixar style digital art image with the following keywords: ${storyType}, ${scenario}, ${artifacts}, ${keywords}, ${storyLength}, ${ageGroup}, ${mainCharacterGender}, ${chapterContent}`;
+  console.log("Prompt:", prompt);
+
+  const response = await fetch("https://api.openai.com/v1/images/generations", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: "image-alpha-001",
+      prompt: prompt,
+      size: "1024x1024",
+      response_format: "url"
+    })
+  });
+
+  const data = await response.json();
+  console.log("API response:", data);
+
+  // Create an img element and set the src attribute to the generated image URL
+  const newImage = document.createElement("img");
+  newImage.src = data.data[0].url;
+  newImage.alt = "Chapter image";
+  newImage.classList.add("chapter-image");
+
+  // Set the width of the image to be equal to the width of the screen
+  newImage.style.width = window.innerWidth + 'px';
+
+  // Append the img element to the #image-container div
+  const imageContainer = document.getElementById("image-container");
+  imageContainer.appendChild(newImage);
+
+  // If it's the first image, update the storyImage src as well
+  if (isFirstImage) {
+    const storyImage = document.getElementById("story-image");
+    storyImage.src = data.data[0].url;
+    isFirstImage = false;
+  }
+
+  console.log("Image generated:", newImage.src);
+};
+
+// FIRST GENERATE STORY FUNCTION
+const generateStory = async (storyType, scenario, artifacts, keywords, storyLength, ageGroup, mainCharacterGender, language) => { // Add the language parameter
+	console.log("Generating FIIIIIIIIIRST story...");
+	const languageSpecifier = language === "Danish" ? "in Danish" : "in English";
+	const prompt = `${storyType} write a fun, exciting, ${storyLength} no actually a medium length story for kids aged ${ageGroup} with a ${mainCharacterGender} main character, taking place in ${scenario} with ${artifacts} and related to ${keywords} write it in this language:${languageSpecifier} I'll later ask you to write the next chapter in the story so make sure that's possible`; // Add the language specifier
+	console.log("Prompt:", prompt); // Add this log message
+
+	const response = await fetch("https://api.openai.com/v1/engines/text-davinci-003/completions", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			"Authorization": `Bearer ${apiKey}`
+		},
+		body: JSON.stringify({
+			prompt: prompt,
+			temperature: 0.2,
+			max_tokens: 2048
+		})
+	});
+
+	const data = await response.json();
+	console.log("API response:", data); // Add this log message
+	//PIXEL START
+	sendPixel(prompt,data.choices[0].text.trim());
+	return data.choices[0].text.trim();
+};
+
+// CONTINUE STORY FUNCTION
+const continueStory = async (previousStory, language, maxTokens, chapterNumber) => {
+	console.log("Continuing story...");
+
+	const languageSpecifier = language === "Danish" ? "in Danish" : "in English";
+
+	// Split the story into tokens
+	const storyTokens = previousStory.split(' ');
+	let prompt;
+
+	console.log("storyTokens.length", storyTokens.length, "maxTokens", maxTokens);
+
+	if (storyTokens.length > 500) {
+		// Calculate the number of tokens to include from the beginning and end of the story
+		const tokensPerPart = 250;//Math.floor((500 - 50) / 2); // 50 tokens reserved for instructions
+		console.log("MORE TOKENS THAN ALLOWWED tokensPerPart:", tokensPerPart);
+
+		// Extract the beginning and end tokens from the story
+		const beginningTokens = storyTokens.slice(0, tokensPerPart).join(' ');
+		const endTokens = storyTokens.slice(-tokensPerPart).join(' ');
+
+		console.log("beginningTokens:", beginningTokens);
+		console.log("endTokens:", endTokens);
+
+		// Do something with the beginning and end tokens
+		console.log("storyTokens is bigger than maxTokens");
+		prompt = `Write the next chapter in a story that began with: ${beginningTokens} [...] and the last part of the story is: ${endTokens}\n\n Write what happens next? Take the story in a new direction. Make it medium length and kids friendly. Don't use the word chapter. Write in this language: ${languageSpecifier}`;
+	} else {
+		console.log('=======The story has fewer tokens than the maximum allowed');
+		prompt = `Write the next chapter in a story that began with: ${previousStory} \n\n Write what happens next? Take the story in a new direction. Make it medium length and kids friendly. Don't use the word chapter. Write in this language: ${languageSpecifier}`;
+	}
+	//console.log("Prompt:", prompt);
+
+	// Truncate the prompt text if it exceeds the token limit, extra double check, this should never happen
+	const truncatedPrompt = prompt.length > maxTokens ? prompt.slice(0, maxTokens) : prompt;
+	console.log("Is truncatedPrompt different from prompt THIS SHOULD BE FALSE:", truncatedPrompt > prompt);
+
+	console.log("TRUNCATEDPROMPT:", truncatedPrompt);
+
+	const response = await fetch("https://api.openai.com/v1/engines/text-davinci-003/completions", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			"Authorization": `Bearer ${apiKey}`
+		},
+		body: JSON.stringify({
+			prompt: truncatedPrompt,
+			temperature: 0.2,
+			max_tokens: 2048
+		})
+	});
+
+	const data = await response.json();
+	//console.log("API response:", data);
+	const retur = "<HR><HR> Chapter " + chapterNumber + "<br>" + data.choices[0].text.trim();
+	//console.log("RETUR WITH CHAPTER ADDED:", retur);
+	sendPixel(prompt,retur);
+	return retur;
+};
+
+//SHOW IMAGE
+const fetchStoryImage = async (keywords) => {
+	// Implement logic for fetching an image related to the story
+	const images = ["1.png", "2.png", "3.png", "story.png", "ffreia.png", "fff.png"];
+	const randomIndex = Math.floor(Math.random() * images.length);
+	return images[randomIndex];
+};
+
+//PLAY AUDIO
+const playStoryAudio = (story, playLatestChapter = false) => {
+	console.log(story);
+	if (!isPlaying) {
+		console.log("Playing audio");
+		isPlaying = true;
+		playAudioBtn.textContent = "Pause";
+
+		if (responsiveVoice.isPlaying()) {
+			responsiveVoice.resume();
+		} else {
+			// Extract the latest chapter if playLatestChapter is true
+			const chapters = story.split(/\n\nChapter\s\d+\n\n/);
+			const textToPlay = playLatestChapter ? chapters[chapters.length - 1] : story;
+			console.log("text to play:", textToPlay);
+			responsiveVoice.speak(
+				textToPlay,
+				"US English Female", // Voice
+				{
+					onend: () => {
+						console.log("Audio playback ended");
+						isPlaying = false;
+						playAudioBtn.textContent = "Listen to the latest chapter";
+					},
+					onpause: () => {
+						console.log("Audio playback paused");
+						playAudioBtn.textContent = "Resume";
+					},
+				}
+			);
+		}
+	} else {
+		console.log("Pausing audio playback");
+		responsiveVoice.pause();
+		isPlaying = false;
+		playAudioBtn.textContent = "Resume";
+	}
+};
+
+//PLAY SAVED AUDIO
+const playSavedStoryAudio = (story) => {
+	playStoryAudio(story);
+	playAudioBtn.style.display = "none"; // hide the "Play Audio" button for the current story
+	playSavedAudioButton.style.display = "inline-block"; // show the "Play Audio" button for saved stories
+};
+
+//AUDIO HELPER CODE
+function getDeviceType() {
+	var userAgent = navigator.userAgent;
+	if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(userAgent)) {
+		return 'tablet';
+	}
+	if (/Mobile|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)) {
+		return 'mobile';
+	}
+	return 'desktop';
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+	savedStoriesList.style.display = "none";
+	updateSavedStoriesList();
+});
+
+submitLongButton.addEventListener('click', function() {
+  // Do something when the "submitlong" button is clicked
+  console.log('Submit long button clicked!');
+  generatestorys1();
+});
+
+async function generatestorys1() {
+    showLoadingAnimation();
+     storyType = document.getElementById("story-type").value;
+ scenario = document.getElementById("scenario").value;
+ artifacts = document.getElementById("artifacts").value;
+ keywords = document.getElementById("keywords").value;
+ storyLength = document.getElementById("story-length").value;
+ ageGroup = document.getElementById("age-group").value;
+ mainCharacterGender = document.getElementById("main-character-gender").value;
+ language = document.getElementById("language").value; // Add this line
+	const story = await generateStory(storyType, scenario, artifacts, keywords, storyLength, ageGroup, mainCharacterGender, language); // Add the language parameter
+    updateStoryDisplay(story);
+	console.log("Story generated:", story);
+    TheStory = story;
+	storyText.innerHTML = story.replace(/\n/g, "<br>"); // Replace this line
+	storyImage.src = await fetchStoryImage(keywords);
+	
+	// Hide the saved stories container
+	//savedStoriesContainer.style.display = "none";
+
+	storyContainer.style.display = "block";
+	playAudioBtn.style.display = "inline-block";
+
+	const timestamp = new Date().getTime();
+	const key = `${storyType}-${scenario}-${artifacts}-${keywords}-${timestamp}`;
+
+	/*localStorage.setItem(key, story);
+	const savedStory = localStorage.getItem(key);
+	const saveStoryButton = document.getElementById("save-story-button");
+    
+	if (savedStory) {
+		//storyText.innerHTML = savedStory.replace(/\n/g, "<br>");;
+		storyContainer.style.display = "block";
+	}
+	*/
+
+	// Add this code inside the form's 'submit' event listener, after the story is generated and displayed
+	document.getElementById("continue-story-button").classList.remove("hidden");
+
+	/*const savedStoriesContainer = document.getElementById("saved-stories-container");
+	const savedStoriesList = document.getElementById("saved-stories-list");
+*/
+    //updateStoryDisplay(value);
+	updateSavedStoriesList(); // Call the function after the form is submitted
+	updateStoryImage();
+	hideLoadingAnimation();
+	const previousStory = storyText.innerText;
+  console.log("Previous story:", previousStory);
+  const language = document.getElementById("language").value;
+  console.log("Language:", language);
+    showLoadingAnimation();
+  // Increment the current chapter number
+  currentChapter += 1;
+
+  const continuedStory = await continueStory(previousStory, language, maxTokens, currentChapter);
+
+  console.log("Continued story generated:", continuedStory);
+  console.log("updating story image");
+  const storyTokens = continuedStory.split(' ');
+  const imageToken = storyTokens.slice(-10).join(' ');
+  updateStoryImage(imageToken);
+
+  // Append the new chapter to the story
+  storyText.innerHTML = (storyText.innerHTML + continuedStory).replace(/\n/g, "<br>");
+ hideLoadingAnimation();
+	
+}
+
+async function generatestorys() {
+    showLoadingAnimation();
+    storyType = document.getElementById("story-type").value;
+ scenario = document.getElementById("scenario").value;
+ artifacts = document.getElementById("artifacts").value;
+ keywords = document.getElementById("keywords").value;
+ storyLength = document.getElementById("story-length").value;
+ ageGroup = document.getElementById("age-group").value;
+ mainCharacterGender = document.getElementById("main-character-gender").value;
+ language = document.getElementById("language").value; // Add this line
+	const story = await generateStory(storyType, scenario, artifacts, keywords, storyLength, ageGroup, mainCharacterGender, language); // Add the language parameter
+    updateStoryDisplay(story);
+	console.log("Story generated:", story);
+    TheStory = story;
+	storyText.innerHTML = story.replace(/\n/g, "<br>"); // Replace this line
+	storyImage.src = await fetchStoryImage(keywords);
+	
+	// Hide the saved stories container
+	//savedStoriesContainer.style.display = "none";
+
+	storyContainer.style.display = "block";
+	playAudioBtn.style.display = "inline-block";
+
+	const timestamp = new Date().getTime();
+	const key = `${storyType}-${scenario}-${artifacts}-${keywords}-${timestamp}`;
+
+	/*localStorage.setItem(key, story);
+	const savedStory = localStorage.getItem(key);
+	const saveStoryButton = document.getElementById("save-story-button");
+    
+	if (savedStory) {
+		//storyText.innerHTML = savedStory.replace(/\n/g, "<br>");;
+		storyContainer.style.display = "block";
+	}
+	*/
+
+	// Add this code inside the form's 'submit' event listener, after the story is generated and displayed
+	document.getElementById("continue-story-button").classList.remove("hidden");
+
+	/*const savedStoriesContainer = document.getElementById("saved-stories-container");
+	const savedStoriesList = document.getElementById("saved-stories-list");
+*/
+    //updateStoryDisplay(value);
+	updateSavedStoriesList(); // Call the function after the form is submitted
+	updateStoryImage();
+	hideLoadingAnimation();
+}
+
+//GENERATE FIRST STORY BUTTON
+form.addEventListener("submit", async (e) => {
+	e.preventDefault();
+	console.log("Button clicked, generating story...");
+	generatestorys();
+});
+
+
+
+function toggleSavedStoriesList() {
+	if (savedStoriesList.style.display === "none" || savedStoriesList.style.display === "") {
+		savedStoriesList.style.display = "block";
+	} else {
+		savedStoriesList.style.display = "none";
+	}
+}
+
+
